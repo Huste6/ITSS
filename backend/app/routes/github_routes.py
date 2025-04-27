@@ -54,3 +54,25 @@ async def analyze_repo(
         return {"contributors": contributors}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/repos/{username}/{repo_name}/freelancers")
+async def detect_freelancers(
+    username: str,
+    repo_name: str,
+    min_inactive_days: int = 30,
+    max_commit_count: int = 10,
+    max_activity_span_days: int = 14,
+    github_service: GitHubService = Depends(get_github_service)
+):
+    """Phát hiện thành viên tự do"""
+    try:
+        freelancers = github_service.dect_freelance_contributors(
+            repo_name,
+            username,
+            min_inactive_days,
+            max_commit_count,
+            max_activity_span_days
+        )
+        return freelancers
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
