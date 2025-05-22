@@ -31,7 +31,6 @@ class GroupResponse(BaseModel):
     name: str
     project_id: str
     project_title: str
-    project_image: Optional[str] = None
     project_description: Optional[str] = None
     leader_id: str
     leader_name: str

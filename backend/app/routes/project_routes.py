@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List
+from pydantic import Field
 from schemas.user_schemas import UserResponse
 from schemas.group_schemas import GroupResponse
 from schemas.project_schemas import ProjectCreate, ProjectResponse, ProjectListResponse
@@ -52,13 +53,13 @@ async def create_project(project: ProjectCreate, current_user: User = Depends(ge
     Create a new project with the given details.
 
     - **title**: The title of the project (required).
-    - **image**: URL or path to the project image (optional).
     - **description**: A brief description of the project (optional).
     """
     try:
         new_project = Project(
             title=project.title,
-            image=project.image,
+            status="Open",
+            tags=project.tags,
             description=project.description,
             mentor=Link(current_user, document_class=User),
             groups=[]
@@ -69,8 +70,10 @@ async def create_project(project: ProjectCreate, current_user: User = Depends(ge
         
         return ProjectResponse(
             _id=str(new_project.id),
+            id=str(new_project.id),
             title=new_project.title,
-            image=new_project.image,
+            status=new_project.status,
+            tags=new_project.tags,
             description=new_project.description,
             mentor_id=str(current_user.id),
             group_ids=[]
@@ -105,8 +108,10 @@ async def get_all_projects(
 
             result.append(ProjectListResponse(
                 _id=str(project.id),
+                id=str(project.id),
                 title=project.title,
-                image=project.image,
+                status=project.status,
+                tags=project.tags,
                 description=project.description,
                 mentor=UserResponse(**mentor.model_dump()) if mentor else None,
                 groups=[GroupResponse(**group.model_dump()) for group in groups]
@@ -143,9 +148,11 @@ async def get_project_by_id(project_id: str):
         groups = await fetch_groups(project)
 
         return ProjectListResponse(
-            _id=str(project.id),
+            # _id=str(project.id),
+            id=str(project.id),
             title=project.title,
-            image=project.image,
+            status=project.status,
+            tags=project.tags,
             description=project.description,
             mentor=UserResponse(**mentor.model_dump()) if mentor else None,
             groups=[GroupResponse(**group.model_dump()) for group in groups]
@@ -158,7 +165,7 @@ async def get_project_by_id(project_id: str):
 
 @router.put(
     "/{project_id}",
-    response_model=ProjectListResponse,
+    response_model=dict,
     description="Update an existing project. Only the mentor who created the project can update it.",
     summary="Update a project"
 )
@@ -168,8 +175,9 @@ async def update_project(project_id: str, project: ProjectCreate, current_user: 
 
     - **project_id**: The ID of the project to update.
     - **title**: The updated title of the project (required).
-    - **image**: The updated image URL or path (optional).
     - **description**: The updated description (optional).
+    - **status**: The updated status of the project (optional).
+    - **tags**: The updated tags for the project (optional).
     """
     try:
         project_id_obj = PyObjectId.validate(project_id)
@@ -189,21 +197,23 @@ async def update_project(project_id: str, project: ProjectCreate, current_user: 
         # Cập nhật project
         db_project.title = project.title
         db_project.description = project.description
-        db_project.image = project.image
+        db_project.status = "open"
+        db_project.tags = project.tags
         await db_project.save()
 
         groups = await fetch_groups(db_project)
 
         logger.info(f"Updated project: {db_project.id}")
 
-        return ProjectListResponse(
-            _id=str(db_project.id),
-            title=db_project.title,
-            image=db_project.image,
-            description=db_project.description,
-            mentor=UserResponse(**mentor.model_dump()) if mentor else None,
-            groups=[GroupResponse(**group.model_dump()) for group in groups]
-        )
+        return {
+            "_id": str(db_project.id),
+            "title": db_project.title,
+            "description": db_project.description,
+            "status": "open",
+            "tags": db_project.tags,
+            "mentor": UserResponse(**mentor.model_dump()) if mentor else None,
+            "groups": [GroupResponse(**group.model_dump()) for group in groups]
+        }
     except HTTPException as e:
         raise e
     except Exception as e:

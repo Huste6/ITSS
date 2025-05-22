@@ -7,6 +7,7 @@ class Group(Document):
     leaders: Optional[Link["User"]]
     members: Optional[List[Link["User"]]]
     allTasks: Optional[List[Link["Task"]]]
+    github_link: Optional[str] = None  # Thêm trường mới với giá trị mặc định là None
     
     class Settings:
         collection = "groups"

@@ -5,14 +5,15 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { toast } from "../ui/sonner";
-
+import axiosInstance from "../../axios-config";
 type RegisterFormProps = {
   onSuccess?: () => void;
   onLogin: () => void;
 };
 
 export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,7 +23,7 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -31,22 +32,51 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
       toast.error("Passwords do not match");
       return;
     }
-
-    const success = await register(name, email, password, role);
-    if (success && onSuccess) {
-      onSuccess();
+    try {
+      console.log(firstName, lastName, email, password, role);
+      const response = await axiosInstance.post("/users/register", {
+        HoDem: firstName,
+        Ten: lastName,
+        email,
+        password,
+        role,
+      });
+      if (response.status === 200) {
+        // Lưu token hoặc thực hiện hành động sau khi đăng nhập thành công
+        console.log("Login successful:", response.data);
+        // Ví dụ: Lưu token vào localStorage
+        localStorage.setItem("token", response.data.token);
+        toast.success("Registration successful!");
+        setTimeout(() => {
+          onLogin();
+        }, 1500);
+      }
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "An error occurred during registration"
+      );
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
+        <Label htmlFor="name">Họ Đệm </Label>
         <Input
           id="name"
-          placeholder="John Smith"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="Nguyen ngoc"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="name">Tên</Label>
+        <Input
+          id="name"
+          placeholder="Quan"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           required
         />
       </div>

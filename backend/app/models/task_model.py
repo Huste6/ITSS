@@ -9,9 +9,10 @@ class Task(Document):
     description: Optional[str]
     group: Optional[Link["Group"]]
     assigned_students: Optional[List[Link["User"]]]
-    status: Optional[str]
-    deadline: Optional[datetime]
-    related_to_project: Optional[Link["Project"]]
+    status: Optional[str] = None
+    deadline: Optional[datetime] = None
+    related_to_project: Optional[Link["Project"]] = None
+    priority: Optional[str] = None
 
     
     class Settings:

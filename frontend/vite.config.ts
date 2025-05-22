@@ -24,8 +24,11 @@ export default defineConfig(() => ({
   },
   plugins: [
     react(),
-    tsconfigPaths()
+    // tsconfigPaths()
   ],
+  watch: {
+    usePolling: true,
+  },
   build: {
     outDir: './dist',
     emptyOutDir: true,

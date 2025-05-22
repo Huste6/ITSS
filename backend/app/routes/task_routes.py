@@ -50,7 +50,8 @@ async def create_task(task: TaskCreate,
             assigned_students=assigned_students,
             status=task.status,
             deadline=task.deadline,
-            related_to_project=Link(project, document_class=Project)
+            related_to_project=Link(project, document_class=Project),
+            priority=task.priority or "Medium"
         )
         await new_task.save()
 
@@ -73,13 +74,15 @@ async def create_task(task: TaskCreate,
         
         return TaskResponse(
             _id=new_task.id,
+            id=str(new_task.id),
             title=new_task.title,
             description=new_task.description,
             group_id=str(group.id),
             group_name=group.name,
             assigned_students=students_data,
             status=new_task.status,
-            deadline=new_task.deadline
+            deadline=new_task.deadline,
+            priority=new_task.priority
         )
     except Exception as e:
         logger.error(f"Error creating task: {str(e)}")
@@ -106,13 +109,15 @@ async def get_all_tasks(current_user: User = Depends(get_current_user),
          })
            result.append(TaskResponse(
                _id=task.id,
+                id=str(task.id),
                title=task.title,
                description=task.description,
                group_id=str(group.id),
                group_name=group.name,
                assigned_students=assigned_students,
                status=task.status,
-               deadline=task.deadline
+               deadline=task.deadline,
+               priority=task.priority
            ))
         return result
     except Exception as e:
@@ -153,7 +158,8 @@ async def get_task(task_id: str, current_user: User = Depends(get_current_user))
             group_name=group.name,
             assigned_students=assigned_students,
             status=task.status,
-            deadline=task.deadline
+            deadline=task.deadline,
+            priority=task.priority
         )
     except Exception as e:
         logger.error(f"Error getting task: {str(e)}")
@@ -206,6 +212,7 @@ async def update_task(task_id: str, task: TaskCreate, current_user: User = Depen
         db_task.status = task.status
         db_task.deadline = task.deadline
         db_task.related_to_project = Link(project, document_class=Project)
+        db_task.priority = task.priority
         await db_task.save()
 
         # Chuyển đổi dữ liệu để trả về
@@ -225,13 +232,15 @@ async def update_task(task_id: str, task: TaskCreate, current_user: User = Depen
         
         return TaskResponse(
             _id=db_task.id,
+            id=str(db_task.id),
             title=db_task.title,
             description=db_task.description,
             group_id=str(group.id),
             group_name=group.name,
             assigned_students=students_data,
             status=db_task.status,
-            deadline=db_task.deadline
+            deadline=db_task.deadline,
+            priority=db_task.priority
         )
     except Exception as e:
         logger.error(f"Error updating task: {str(e)}")

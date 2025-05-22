@@ -13,7 +13,11 @@ import { ProjectCard, Project } from "../components/projects/ProjectCard";
 import { GroupCard, Group } from "../components/groups/GroupCard";
 import { Button } from "../components/ui/button";
 import { Link } from "react-router-dom";
-
+import { getProjects } from "../data/projectsData";
+import { getGroups } from "../data/groupData";
+import axiosInstance from "../axios-config";
+import { getTasks } from "../data/taskData";
+import Tasks from "./Tasks";
 const Dashboard = () => {
   const { user } = useAuth();
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
@@ -23,101 +27,55 @@ const Dashboard = () => {
   // Mock data loading
   useEffect(() => {
     // Mock tasks data
-    const mockTasks: Task[] = [
-      {
-        id: "task1",
-        title: "Literature Review",
-        description:
-          "Review existing research papers on the topic and create a summary",
-        status: "in-progress",
-        priority: "high",
-        dueDate: "2025-05-20",
-        assignee: {
-          id: user?.id || "user1",
-          name: user?.name || "John Doe",
-          avatar: user?.avatar,
-        },
-        projectId: "project1",
-        projectTitle: "Research on Machine Learning Applications",
-      },
-      {
-        id: "task2",
-        title: "Data Collection",
-        description: "Collect dataset from the provided sources",
-        status: "todo",
-        priority: "medium",
-        dueDate: "2025-05-25",
-        assignee: {
-          id: user?.id || "user1",
-          name: user?.name || "John Doe",
-          avatar: user?.avatar,
-        },
-        projectId: "project1",
-        projectTitle: "Research on Machine Learning Applications",
-      },
-    ];
+    const loadTasks = async () => {
+      try {
+        const taskData = await getTasks();
+        setRecentTasks(taskData);
+        console.log("Tasks state updated:", taskData);
+      } catch (error) {
+        console.error("Error loading tasks:", error);
+        // Có thể thêm thông báo lỗi cho người dùng
+      }
+    };
+    if (user?.id) {
+      loadTasks();
+    }
+    const loadProjects = async () => {
+      try {
+        const projectsData = await getProjects();
+        setProjects(projectsData);
+        console.log("Projects state updated:", projectsData);
+      } catch (error) {
+        console.error("Error loading projects:", error);
+      }
+    };
 
-    // Mock projects data
-    const mockProjects: Project[] = [
-      {
-        id: "project1",
-        title: "Research on Machine Learning Applications",
-        description:
-          "A comprehensive study of machine learning applications in healthcare",
-        mentorName: "Dr. Smith",
-        mentorId: "mentor1",
-        teamLeaderId: user?.role === "leader" ? user?.id : "leader1",
-        teamLeaderName: user?.role === "leader" ? user?.name : "Jane Leader",
-        members: 4,
-        status: "in-progress",
-        progress: 35,
-        tags: ["Machine Learning", "Healthcare", "Research"],
-      },
-    ];
+    if (user?.id) {
+      loadProjects();
+    }
 
-    // Mock groups data
-    const mockGroups: Group[] = [
-      {
-        id: "group1",
-        name: "ML Research Team",
-        projectId: "project1",
-        projectTitle: "Research on Machine Learning Applications",
-        members: [
-          {
-            id: user?.id || "user1",
-            name: user?.name || "John Doe",
-            role: user?.role === "leader" ? "leader" : "member",
-            avatar: user?.avatar,
-          },
-          {
-            id: "user2",
-            name: "Alice Smith",
-            role: user?.role === "leader" ? "member" : "leader",
-            avatar: `https://ui-avatars.com/api/?name=Alice+Smith&background=random`,
-          },
-          {
-            id: "user3",
-            name: "Bob Johnson",
-            role: "member",
-            avatar: `https://ui-avatars.com/api/?name=Bob+Johnson&background=random`,
-          },
-          {
-            id: "user4",
-            name: "Carol Williams",
-            role: "member",
-            avatar: `https://ui-avatars.com/api/?name=Carol+Williams&background=random`,
-          },
-        ],
-        progress: 35,
-        hasUnreadMessages: true,
-      },
-    ];
-
-    setRecentTasks(mockTasks);
-    setProjects(mockProjects);
-    setGroups(mockGroups);
-  }, [user]);
-
+    const loadGroups = async () => {
+      try {
+        console.log("Loading projects...");
+        const projectsData = await getGroups();
+        setGroups(projectsData);
+        console.log("Projects state updated:", projectsData);
+      } catch (error) {
+        console.error("Error loading projects:", error);
+        // Có thể thêm thông báo lỗi cho người dùng
+      }
+    };
+    if (user?.id) {
+      loadGroups();
+    }
+  }, [user?.id]);
+  const randomIndex = Math.floor(Math.random() * projects.length);
+  const randomIndexForGroup = Math.floor(Math.random() * groups.length);
+  const randomIndexForTask = Math.floor(Math.random() * recentTasks.length);
+  let randomIndexForTask2 = Math.floor(Math.random() * recentTasks.length);
+  while (randomIndexForTask2 === randomIndexForTask && recentTasks.length > 1) {
+    randomIndexForTask2 = Math.floor(Math.random() * recentTasks.length);
+  }
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -222,9 +180,12 @@ const Dashboard = () => {
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recentTasks.map((task) => (
+                {/* {recentTasks.map((task) => (
                   <TaskCard key={task.id} task={task} />
                 ))}
+                <ProjectCard project={projects[randomIndex]} /> */}
+                <TaskCard task={recentTasks[randomIndexForTask]}></TaskCard>
+                <TaskCard task={recentTasks[randomIndexForTask2]}></TaskCard>
               </div>
             )}
           </CardContent>
@@ -256,9 +217,10 @@ const Dashboard = () => {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {projects.map((project) => (
+                  {/* {projects.map((project) => (
                     <ProjectCard key={project.id} project={project} />
-                  ))}
+                  ))} */}
+                  <ProjectCard project={projects[randomIndex]} />
                 </div>
               )}
             </CardContent>
@@ -284,9 +246,7 @@ const Dashboard = () => {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {groups.map((group) => (
-                    <GroupCard key={group.id} group={group} />
-                  ))}
+                  <GroupCard group={groups[randomIndexForGroup]}></GroupCard>
                 </div>
               )}
             </CardContent>

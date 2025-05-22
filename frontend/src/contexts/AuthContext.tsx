@@ -5,15 +5,17 @@ type User = {
   id: string;
   name: string;
   email: string;
-  role: "student" | "mentor" | "leader";
+  role: string;
   avatar?: string;
+  token?: string;
+  groupId?: Record<string, any>;
 };
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, data: any) => Promise<boolean>;
   register: (
     name: string,
     email: string,
@@ -29,28 +31,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, data: any) => {
     setIsLoading(true);
     try {
       // Mock login - in a real app, this would call an API
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Simulate different user roles for demo purposes
-      let role: "student" | "mentor" | "leader" = "student";
-      if (email.includes("mentor")) {
-        role = "mentor";
-      } else if (email.includes("leader")) {
-        role = "leader";
-      }
-
+      console.log(email, password, data.role);
+      const role = data.role;
       const user: User = {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
-        name: email.split("@")[0],
+        id: data._id,
+        name: data.ho_ten,
         email,
         role,
+        token: data.access_token,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          email.split("@")[0]
+          data.Ten[0]
         )}&background=random`,
+        groupId: data.group_id,
       };
 
       setUser(user);
@@ -84,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
           name
         )}&background=random`,
+        groupId: { default: "default-group-id" }, // Replace "default-group-id" with the appropriate value
       };
 
       setUser(user);

@@ -8,9 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Progress } from "../../components/ui/progress";
+import { Eye, Edit, Trash, Users, MoreVertical } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { Users } from "lucide-react";
 
 export type Project = {
   id: string;
@@ -18,9 +24,6 @@ export type Project = {
   description: string;
   mentorName: string;
   mentorId: string;
-  teamLeaderId?: string;
-  teamLeaderName?: string;
-  members: number;
   status: "open" | "in-progress" | "completed";
   progress: number;
   tags: string[];
@@ -29,9 +32,20 @@ export type Project = {
 type ProjectCardProps = {
   project: Project;
   onClick?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  userRole?: string;
+  userId?: string;
 };
 
-export function ProjectCard({ project, onClick }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  onClick,
+  onEdit,
+  onDelete,
+  userRole = "student",
+  userId = "",
+}: ProjectCardProps) {
   const { user } = useAuth();
 
   const statusColor = {
@@ -63,13 +77,13 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
       </CardHeader>
       <CardContent className="pb-2">
         <div className="space-y-4">
-          <div>
+          {/* <div>
             <div className="flex justify-between text-sm mb-1">
               <span className="text-muted-foreground">Progress</span>
               <span className="font-medium">{project.progress}%</span>
             </div>
             <Progress value={project.progress} className="h-2" />
-          </div>
+          </div> */}
 
           <div className="flex flex-wrap gap-1">
             {project.tags.map((tag) => (
@@ -80,32 +94,32 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           </div>
 
           <div className="flex justify-between text-sm">
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <Users className="h-4 w-4 mr-1 text-muted-foreground" />
               <span>{project.members} members</span>
-            </div>
+            </div> */}
             <div>
               <span className="text-muted-foreground">Mentor: </span>
               <span>{project.mentorName}</span>
             </div>
           </div>
 
-          {project.teamLeaderName && (
+          {/* {project.teamLeaderName && (
             <div className="text-sm">
               <span className="text-muted-foreground">Team Leader: </span>
               <span>{project.teamLeaderName}</span>
             </div>
-          )}
+          )} */}
         </div>
       </CardContent>
       <CardFooter className="pt-2">
         <Button onClick={onClick} className="w-full">
           {isUserOwner
             ? "Manage Project"
-            : user?.role === "leader" && user?.id === project.teamLeaderId
+            : user?.role === "mentor" && user?.id === project.mentorId
             ? "Manage Team"
             : project.status === "open"
-            ? "Join Project"
+            ? "View Details"
             : "View Details"}
         </Button>
       </CardFooter>

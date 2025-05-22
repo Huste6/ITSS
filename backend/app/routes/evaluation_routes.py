@@ -26,8 +26,7 @@ async def create_evaluation(evaluation: EvaluationCreate, current_user: User = D
         # Validate and get student
         student_id = PyObjectId.validate(evaluation.student_id)
         student = await User.get(student_id)
-        if not student or student.role != "student":
-            raise HTTPException(status_code=404, detail="Student not found")
+        
 
         # Validate and get project
         project_id = PyObjectId.validate(evaluation.project_id)
@@ -173,8 +172,7 @@ async def update_evaluation(evaluation_id: str, evaluation: EvaluationCreate, cu
         student = await User.get(student_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid student_id format")
-    if not student or student.role != "student":
-        raise HTTPException(status_code=404, detail="Student not found")
+    
 
     # Validate and get project
     try:

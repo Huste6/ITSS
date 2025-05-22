@@ -1,4 +1,5 @@
 from typing import List, Optional
+from pydantic import Field
 from beanie import Document, Link
 
 class Project(Document):
@@ -6,7 +7,10 @@ class Project(Document):
     description: Optional[str]
     mentor: Optional[Link["User"]]
     groups: Optional[List[Link["Group"]]]
-    image: Optional[str] = None
+    status: Optional[str] = "Open" #default status
+    tags: Optional[List[str]] = []  # List of tags
+
+
     
     class Config:
         json_schema_extra = {
@@ -15,7 +19,9 @@ class Project(Document):
                 "description": "Project Description",
                 "mentor": "Mentor ID",
                 "groups": ["Group ID 1", "Group ID 2"],
-                "image": "Image URL"
+                "status": "In Progress",
+                "progress": 30.0,
+                "tags": ["AI", "ML", "backend"]
             }
         }
 

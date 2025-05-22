@@ -34,6 +34,11 @@ pip install 'pydantic[email]'
 
 - Open: http://127.0.0.1:8000/docs
 
+### Run Test
+```sh
+PYTHONPATH="$(pwd)/app" pytest
+```
+
 ### DATABASE
 - MongoDB WebUI: http://127.0.0.1:8081/
 - Credential: root - password
