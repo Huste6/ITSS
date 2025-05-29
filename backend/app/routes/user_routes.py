@@ -53,6 +53,7 @@ async def register_user(user: UserCreate):
         Ten=user.Ten,
         email=user.email,
         ho_ten=full_name,
+        github_user=user.github_user,
         password=user.password,
         role=user.role,
         group_id=None,
