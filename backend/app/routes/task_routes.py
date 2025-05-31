@@ -154,7 +154,7 @@ async def get_task(task_id: str, current_user: User = Depends(get_current_user))
 
         return TaskResponse(
             _id=task.id,
-             id=str(task.id), # thêm trường id để trả về taskresponse
+            id= str(task.id),
             title=task.title,
             description=task.description,
             group_id=str(group.id),
@@ -162,7 +162,8 @@ async def get_task(task_id: str, current_user: User = Depends(get_current_user))
             assigned_students=assigned_students,
             status=task.status,
             deadline=task.deadline,
-            priority=task.priority
+            priority=task.priority,
+            created_at=task.created_at
         )
     except Exception as e:
         logger.error(f"Error getting task: {str(e)}")
