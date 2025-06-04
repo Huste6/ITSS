@@ -43,6 +43,24 @@ export const getStudents = async (forceRefresh = false): Promise<Student[]> => {
     throw error;
   }
 };
+export const getAll = async (): Promise<Student[]> => {
+  try {
+    const response = await axiosInstance.get("/users/all");
+    return response.data.map((student: any) => ({
+      id: student.id,
+      name: student.ho_ten,
+      email: student.email,
+      role: student.role,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        student.ho_ten
+      )}&background=random`,
+      groupId: student.group_id,
+    }));
+  } catch (error) {
+    console.error("Error fetching all students:", error);
+    throw error;
+  }
+};
 
 export const getCachedStudents = (): Student[] => {
   return cachedStudents;

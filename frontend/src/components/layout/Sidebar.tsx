@@ -66,6 +66,16 @@ export const Sidebar = ({
       label: "Settings",
       href: "/dashboard/settings",
     },
+    // Admin only section
+    ...(user.role === "admin"
+      ? [
+          {
+            icon: Users,
+            label: "User Management",
+            href: "/dashboard/admin/users",
+          },
+        ]
+      : []),
   ];
 
   return (

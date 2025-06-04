@@ -80,6 +80,20 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
+@router.get('/all')
+async def get_all_users_admin(current_user: User = Depends(get_current_admin)):
+    users = await User.find({"role": {"$in": ["student", "mentor", "admin"]}}).to_list()
+
+    return [
+        {
+            "id": str(user.id),
+            "ho_ten": user.ho_ten,
+            "email": user.email,
+            "role": user.role,
+            "group_id": user.group_id,
+        }
+        for user in users
+    ]
 @router.get('/get-all')
 async def get_all_users(current_user: User = Depends(get_current_user)):
     users = await User.find({"role": "student"}).to_list()
