@@ -27,3 +27,4 @@ PyGithub==2.6.1
 pytest
 httpx
 minio
+pytest-asyncio
