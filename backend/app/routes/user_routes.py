@@ -59,7 +59,6 @@ async def register_user(user: UserCreate):
         group_id=None,
         tasks=None,
         contributions=None,
-        github_user= user.github_user
     )
     await new_user.insert()
     return new_user

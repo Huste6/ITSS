@@ -34,8 +34,16 @@ async def get_free_rider(
         group = await Group.get(group_obj_id)
         if not group:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+                
+        #Error
+        members = []
+        if group.members:
+            for member in group.members:
+                fetched_member = await member.fetch() if isinstance(member, Link) else member
+                members.append(fetched_member)
+
+        print(members)
         
-        members = await group.members.fetch() if group.members else []
         github_link = group.github_link
         if not github_link:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Group does not have a GitHub link")
