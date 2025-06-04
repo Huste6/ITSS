@@ -1,0 +1,41 @@
+services:
+  otelcol:    
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    container_name: otelcol
+    volumes:
+      - ./observation/otel-config.yaml:/etc/otelcol/otel-collector-config.yml
+    command:
+        - --config=/etc/otelcol/otel-collector-config.yml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:1.69.0
+    ports:
+      - "16686:16686"
+      - "14278:14278"
+    command:
+      - "--query.ui-config=/etc/jaeger/jaeger-ui.json"
+    volumes:
+      - "./observation/jaeger-ui.json:/etc/jaeger/jaeger-ui.json"
+    environment:
+      - METRICS_STORAGE_TYPE=prometheus
+      - PROMETHEUS_SERVER_URL=http://prometheus:9090
+      - PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=true
+      - PROMETHEUS_QUERY_NORMALIZE_CALLS=true
+      - PROMETHEUS_QUERY_NORMALIZE_DURATION=true
+
+  prometheus:    
+    image: prom/prometheus:latest
+    volumes:
+      - "./observation/prometheus.yml:/etc/prometheus/prometheus.yml"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --enable-feature=otlp-write-receiver
+    ports:
+      - "9090:9090"
+    container_name: prometheus

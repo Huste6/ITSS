@@ -71,11 +71,11 @@ async def get_free_rider(
 
             if contributor_data:
                 loc_score = (contributor_data["loc"] - min_loc) / (max_loc - min_loc) if max_loc != min_loc else 0
-                real_score = loc_score * 0.2 + avg_score * 0.8
+                real_score = loc_score * 2 + avg_score * 0.8
             else:
                 real_score = 0
 
-            if real_score < 0.2:
+            if real_score < 2:
                 await FreeRider.find(FreeRider.group == Link(group)).delete()
 
                 freerider = FreeRider(

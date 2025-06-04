@@ -38,35 +38,6 @@ services:
       - file_base:/data        
     command: server /data --console-address ":9001"        
 
-  jeager:
-    image: jaegertracing/jaeger:2.6.0
-    container_name: jaeger
-    hostname: jaeger
-    ports:
-      - "16686:16686"
-      - "8888:8888"
-      - "8889:8889"
-      - "4317:4317"
-      - "4318:4318"
-    networks:
-      itss:
-        aliases: [spm_metrics_source]
-    volumes:
-      - ./observability/config-spm.yaml:/etc/jaeger/config.yml
-      - ./observability/jaeger-ui.json:/etc/jaeger/jaeger-ui.json"
-    command: ["--config", "/etc/jaeger/config.yml"]
-  
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    hostname: prometheus
-    volumes:
-      - "./observability/prometheus.yml:/etc/prometheus/prometheus.yml"
-    networks:
-      - itss
-    ports:
-      - "9090:9090"
-
 volumes:
   mongo_data:
   file_base:

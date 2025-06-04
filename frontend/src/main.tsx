@@ -23,13 +23,15 @@ import GroupDetail from "./pages/GroupDetail";
 import Reports from "./pages/Reports";
 import TaskDetail from "./pages/TaskDetail";
 import AdminUsers from "./pages/AdminUsers";
+import TraceProvider from './instrument';
+
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 const queryClient = new QueryClient();
 
 root.render(
-  <StrictMode>
+  <TraceProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
@@ -65,5 +67,5 @@ root.render(
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
-  </StrictMode>
+  </TraceProvider>
 );
