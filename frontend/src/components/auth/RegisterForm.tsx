@@ -15,6 +15,7 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [githubUser, setGithubUser] = useState(""); // Thêm state cho github_user
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<"student" | "mentor">("student");
@@ -23,7 +24,14 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !githubUser
+    ) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -33,11 +41,12 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
       return;
     }
     try {
-      console.log(firstName, lastName, email, password, role);
+      console.log(firstName, lastName, email, githubUser, password, role);
       const response = await axiosInstance.post("/users/register", {
         HoDem: firstName,
         Ten: lastName,
         email,
+        github_user: githubUser, // Thêm github_user vào payload
         password,
         role,
       });
@@ -61,7 +70,7 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Họ Đệm </Label>
+        <Label htmlFor="name">First Name</Label>
         <Input
           id="name"
           placeholder="Nguyen ngoc"
@@ -71,7 +80,7 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="name">Tên</Label>
+        <Label htmlFor="name">Last Name</Label>
         <Input
           id="name"
           placeholder="Quan"
@@ -88,6 +97,16 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
           placeholder="your.email@university.edu"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="github_user">GitHub Username</Label>
+        <Input
+          id="github_user"
+          placeholder="your-github-username"
+          value={githubUser}
+          onChange={(e) => setGithubUser(e.target.value)}
           required
         />
       </div>
