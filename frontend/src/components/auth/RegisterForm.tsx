@@ -30,7 +30,7 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
       !email ||
       !password ||
       !confirmPassword ||
-      !githubUser
+      (role === "student" && !githubUser)
     ) {
       toast.error("Please fill in all fields");
       return;
@@ -100,16 +100,18 @@ export function RegisterForm({ onSuccess, onLogin }: RegisterFormProps) {
           required
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="github_user">GitHub Username</Label>
-        <Input
-          id="github_user"
-          placeholder="your-github-username"
-          value={githubUser}
-          onChange={(e) => setGithubUser(e.target.value)}
-          required
-        />
-      </div>
+      {role === "student" && (
+        <div className="space-y-2">
+          <Label htmlFor="github_user">GitHub Username</Label>
+          <Input
+            id="github_user"
+            placeholder="your-github-username"
+            value={githubUser}
+            onChange={(e) => setGithubUser(e.target.value)}
+            required={role === "student"}
+          />
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input
