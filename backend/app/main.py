@@ -7,16 +7,17 @@ from database import init_db
 from config import env
 import logging
 # OpenTelemetry
-from opentelemetry import trace, metrics
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+# from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+# from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+# from opentelemetry import trace
+# from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor
+# from opentelemetry import metrics
+# from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+# from opentelemetry.sdk.metrics import MeterProvider
+# from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,25 +57,22 @@ class FastAPIApp:
         self.app.include_router(free_rider.router)
 
 # OpenTelemetry setup
-resource = Resource.create({SERVICE_NAME: "itss-service"})
+# resource = Resource.create(attributes={
+#     SERVICE_NAME: "itss-be-service"
+# })
+# tracerProvider = TracerProvider(resource=resource)
+# processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces"))
+# tracerProvider.add_span_processor(processor)
+# trace.set_tracer_provider(tracerProvider)
 
-# Tracing setup
-trace.set_tracer_provider(TracerProvider(resource=resource))
-tracer_provider = trace.get_tracer_provider()
-trace_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
-tracer_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
+# reader = PeriodicExportingMetricReader(
+#     OTLPMetricExporter(endpoint="http://localhost:4318/v1/metrics")
+# )
+# meterProvider = MeterProvider(resource=resource, metric_readers=[reader])
+# metrics.set_meter_provider(meterProvider)
 
-# Metrics setup
-metric_reader = PeriodicExportingMetricReader(
-    OTLPMetricExporter(endpoint="http://localhost:4318/v1/metrics")
-)
-metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
-
-# App must be initialized AFTER setting providers
 app_instance = FastAPIApp().app
-
-# Instrument FastAPI
-FastAPIInstrumentor.instrument_app(app_instance)
+# FastAPIInstrumentor.instrument_app(app_instance)
 
 if __name__ == "__main__":  
     uvicorn.run("main:app_instance", host=env.HOST, port=env.PORT, reload=True)

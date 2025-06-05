@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from config import env
 from github import Github
+from github.GithubException import GithubException
+from requests.exceptions import RetryError
 
 class GitHubService:
     def __init__(self):
@@ -72,17 +74,26 @@ class GitHubService:
         else:
             user = self.github.get_user()
             repo = self.github.get_repo(f"{user.login}/{repo_name}")
-        
-        contributors = []
-        for contributor in repo.get_contributors():
-            contributors.append({
-                "login": contributor.login,
-                "name": contributor.name,
-                "contributions": contributor.contributions,
-                "avatar_url": contributor.avatar_url,
-                "profile_url": contributor.html_url
-            })
-        return contributors
+                
+        try:
+            contributors = []
+            
+            for contributor in repo.get_contributors():
+                contributors.append({
+                    "login": contributor.login,
+                    "name": contributor.name,
+                    "contributions": contributor.contributions,
+                    "avatar_url": contributor.avatar_url,
+                    "profile_url": contributor.html_url
+                })
+            
+            return contributors
+        except GithubException as e:
+            print(f"Lỗi GithubException: {e.data}")
+        except RetryError as re:
+            print("Lỗi RetryError:", str(re))
+        except Exception as ex:
+            print("Lỗi không xác định:", str(ex))                
     
     def analyze_contributor_activity(self, repo_name, username=None):
         """Phân tích hoạt động của các contributors"""
