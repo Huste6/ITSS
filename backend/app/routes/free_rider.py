@@ -69,10 +69,16 @@ async def get_free_rider(
         contributors = None
         try:
             contributors = await github_service.analyze_contributor_activity(reponame, username)
+        except HTTPException as e:
+            if e.status_code == 429:
+                logger.warning("GitHub API rate limit exceeded")
+                raise e
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.detail)
         except Exception as e:
-            logger.exception("Github API limit exceeded")
+            logger.exception("Unhandled error while analyzing GitHub repository")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-        
+                
         logger.debug(f"Found {len(contributors)} contributors in GitHub repo.")
         for c in contributors:
             c["loc"] = c["lines_added"] + c["lines_removed"]
@@ -107,7 +113,7 @@ async def get_free_rider(
             else:
                 real_score = 0
 
-            if real_score < 2:                
+            if real_score < 10:                
                 freerider = FreeRider(
                     score=real_score,
                     user=Link(student),

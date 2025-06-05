@@ -3,7 +3,12 @@ from config import env
 from github import Github
 from github.GithubException import GithubException
 from requests.exceptions import RetryError
+from github.Requester import Requester
+from github.RateLimit import RateLimit
+from urllib3.util.retry import Retry
+import requests
 import logging
+import datetime
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -11,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 class GitHubService:
     def __init__(self):
-        self.github = Github(env.GITHUB_TOKEN)
+        self.github = Github(login_or_token=env.GITHUB_TOKEN, retry=None)
 
     def get_repo(self, username: str, reponame: str):
         """Lấy repository theo username và tên repo"""
@@ -123,6 +128,15 @@ class GitHubService:
 
             return list(contributor_data.values())
 
+        
+        except GithubException as e:
+            if e.status == 403 and "rate limit" in str(e).lower():                                
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"GitHub API rate limit exceeded."
+                )
+            raise HTTPException(status_code=400, detail=f"GitHub API error: {str(e)}")
+            
         except Exception as e:
             logger.exception("Error analyzing repository")
             raise HTTPException(status_code=400, detail=f"Error analyzing repository: {str(e)}")
