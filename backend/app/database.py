@@ -7,6 +7,7 @@ from models.project_model import Project
 from models.group_model import Group
 from models.evaluation_model import Evaluation
 from models.report_model import Report
+from models.free_rider import FreeRider
 from pymongo.errors import OperationFailure
 import logging
 
@@ -19,7 +20,7 @@ async def init_db(test: bool = False):
 
         await init_beanie(
             database=db,
-            document_models=[User, Task, Project, Group, Evaluation, Report]
+            document_models=[User, Task, Project, Group, Evaluation, Report, FreeRider]
         )
         logging.info(f"Connected to MongoDB: {db_name}")
     except OperationFailure as e:
