@@ -114,6 +114,33 @@ const getFreeRiders = async (groupId: string) => {
     return [];
   }
 };
+
+// Hàm mới: getFreeRidersFromAPI với timeout 10s
+const getFreeRidersFromAPI = async (groupId: string) => {
+  return new Promise<any[]>((resolve, reject) => {
+    let didTimeout = false;
+    const timeout = setTimeout(() => {
+      didTimeout = true;
+      reject(new Error("Limit exceed: No data after 10 seconds"));
+    }, 10000);
+
+    axiosInstance
+      .get(`/free_rider/get_free_rider?group_id=${groupId}`)
+      .then((res) => {
+        if (!didTimeout) {
+          clearTimeout(timeout);
+          resolve(res.data || []);
+        }
+      })
+      .catch((err) => {
+        if (!didTimeout) {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+  });
+};
+
 const getGitHubCommits = async (username: string, repoName: string) => {
   try {
     // const response = await fetch(
@@ -250,10 +277,15 @@ const GroupDetail = () => {
     if (!id) return;
     setIsLoadingFreeRider(true);
     try {
-      const data = await getFreeRiders(id);
+      const data = await getFreeRidersFromAPI(id);
       setFreeRiders(data);
-    } catch (e) {
-      toast.error("Failed to fetch free riders");
+    } catch (e: any) {
+      if (e.message && e.message.includes("Limit exceed")) {
+        toast.error("Limit exceed: Không có dữ liệu sau 10 giây.");
+      } else {
+        toast.error("Failed to fetch free riders");
+      }
+      setFreeRiders([]);
     }
     setIsLoadingFreeRider(false);
   };
