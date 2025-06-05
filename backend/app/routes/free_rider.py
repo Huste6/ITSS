@@ -65,7 +65,13 @@ async def get_free_rider(
         logger.info(f"Fetching GitHub contributors for repo: {github_link}")
         reponame = github_link.split("/")[-1]
         username = github_link.split("/")[-2]
-        contributors = github_service.analyze_contributor_activity(reponame, username)
+        
+        contributors = None
+        try:
+            contributors = await github_service.analyze_contributor_activity(reponame, username)
+        except Exception as e:
+            logger.exception("Github API limit exceeded")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         
         logger.debug(f"Found {len(contributors)} contributors in GitHub repo.")
         for c in contributors:
@@ -84,12 +90,12 @@ async def get_free_rider(
         
         logger.info("Calculating new free rider scores...")
         for student in members:                    
-            logger.debug(f"Processing student: {student.username}")
+            logger.debug(f"Processing student: {student.email}")
             student_evals = await Evaluation.find(
                 Evaluation.project._id == ObjectId(project_id),
                 Evaluation.student._id == ObjectId(student.id)
             ).to_list()
-            logger.debug(f"Found {len(student_evals)} evaluations for student {student.username}")
+            logger.debug(f"Found {len(student_evals)} evaluations for student {student.email}")
 
             avg_score = sum(e.score for e in student_evals if e.score is not None) / len(student_evals) if student_evals else 0                
                         
@@ -113,7 +119,7 @@ async def get_free_rider(
                     last_commit_date=datetime.fromisoformat(contributor_data["last_commit_date"]) if contributor_data and contributor_data["last_commit_date"] else None
                 )
                 await freerider.insert()
-                logger.info(f"Added free rider: {student.username} to group {group.name} with score {real_score:.2f}")
+                logger.info(f"Added free rider: {student.email} to group {group.name} with score {real_score:.2f}")
 
         logger.debug("Fetching final free rider list to return...")
         freeriders = await FreeRider.find(FreeRider.group._id == group_obj_id).to_list()
