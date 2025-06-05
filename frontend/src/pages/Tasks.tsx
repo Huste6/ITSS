@@ -219,7 +219,7 @@ const Tasks = () => {
   };
 
   const fetchTasks = async () => {
-    if (user?.groupId || user?.role === "mentor") {
+    if (user?.groupId || user?.role === "mentor" || user?.role === "admin") {
       const response = await getTasks();
       // Filter tasks based on user role and group
       console.log("User role:", user?.groupId?.id);

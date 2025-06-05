@@ -52,16 +52,95 @@ import GroupEvaluationTab from "../components/groups/GroupEvaluationTab";
 
 const getFreeRiders = async (groupId: string) => {
   try {
-    const response = await axiosInstance.get(`/groups/free-riders/${groupId}`);
-    if (!response) {
-      throw new Error("Failed to fetch free riders");
-    }
-    return await response.data;
+    // Lấy tất cả members của group
+    const group = await getGR(groupId);
+    if (!group || !group.members || group.members.length === 0) return [];
+
+    // Lấy tất cả evaluations của các thành viên
+    const evaluationsRes = await axiosInstance.get(
+      `/evaluations?group_id=${groupId}`
+    );
+    const evaluations = evaluationsRes.data || [];
+
+    // Tính điểm trung bình evaluation cho từng member
+    const memberScores: Record<string, number> = {};
+    group.members.forEach((member: any) => {
+      const memberEvals = evaluations.filter(
+        (e: any) => e.student?.id === member.id
+      );
+      if (memberEvals.length > 0) {
+        memberScores[member.id] =
+          memberEvals.reduce((sum: number, e: any) => sum + (e.score || 0), 0) /
+          memberEvals.length;
+      } else {
+        memberScores[member.id] = 0;
+      }
+    });
+
+    // Tìm điểm thấp nhất
+    const minScore = Math.min(...Object.values(memberScores));
+    // Lấy tất cả member có điểm thấp nhất
+    const freeRiders = group.members.filter(
+      (m: any) => memberScores[m.id] === minScore
+    );
+
+    // Thêm dữ liệu fix cứng cho mỗi free rider
+    const fixedData = [
+      {
+        score: 2.5,
+        commit_count: 3,
+        lines_added: 10,
+        lines_removed: 5,
+        files_modified: 1,
+        last_commit_date: "2025-06-01T10:00:00Z",
+      },
+      {
+        score: 2.5,
+        commit_count: 2,
+        lines_added: 5,
+        lines_removed: 2,
+        files_modified: 1,
+        last_commit_date: "2025-06-02T12:00:00Z",
+      },
+    ];
+
+    // Gán dữ liệu fix cứng vào từng free rider (nếu có nhiều hơn 2 thì lặp lại dữ liệu fix cứng)
+    return freeRiders.map((member: any, idx: number) => ({
+      ...member,
+      ...fixedData[idx % fixedData.length],
+    }));
   } catch (error) {
-    console.error("Error fetching free riders:", error);
+    console.error("Error fetching free riders by evaluation:", error);
     return [];
   }
 };
+
+// Hàm mới: getFreeRidersFromAPI với timeout 10s
+const getFreeRidersFromAPI = async (groupId: string) => {
+  return new Promise<any[]>((resolve, reject) => {
+    let didTimeout = false;
+    const timeout = setTimeout(() => {
+      didTimeout = true;
+      reject(new Error("Limit exceed: No data after 10 seconds"));
+    }, 10000);
+
+    axiosInstance
+      .get(`/free_rider/get_free_rider?group_id=${groupId}`)
+      .then((res) => {
+        if (!didTimeout) {
+          clearTimeout(timeout);
+          resolve(res.data || []);
+        }
+      })
+      .catch((err) => {
+        if (!didTimeout) {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+  });
+};
+
 const getGitHubCommits = async (username: string, repoName: string) => {
   try {
     // const response = await fetch(
@@ -94,7 +173,7 @@ const GroupDetail = () => {
     useState(false);
   const [isAddGitHubDialogOpen, setIsAddGitHubDialogOpen] = useState(false);
   const [githubLinkInput, setGitHubLinkInput] = useState("");
-  const [freeRiders, setFreeRiders] = useState<GroupMember[]>([]);
+  const [freeRiders, setFreeRiders] = useState<any[]>([]);
   const [isLoadingFreeRider, setIsLoadingFreeRider] = useState(false);
   const projectId = id;
 
@@ -198,10 +277,15 @@ const GroupDetail = () => {
     if (!id) return;
     setIsLoadingFreeRider(true);
     try {
-      const data = await getFreeRiders(id);
+      const data = await getFreeRidersFromAPI(id);
       setFreeRiders(data);
-    } catch (e) {
-      toast.error("Failed to fetch free riders");
+    } catch (e: any) {
+      if (e.message && e.message.includes("Limit exceed")) {
+        toast.error("Limit exceed: Không có dữ liệu sau 10 giây.");
+      } else {
+        toast.error("Failed to fetch free riders");
+      }
+      setFreeRiders([]);
     }
     setIsLoadingFreeRider(false);
   };
@@ -525,26 +609,89 @@ const GroupDetail = () => {
                     No free riders found.
                   </p>
                 ) : (
-                  freeRiders.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center gap-3 border-b py-2 last:border-b-0"
-                    >
-                      {member.avatar && (
-                        <img
-                          src={member.avatar}
-                          alt={member.name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      )}
-                      <div>
-                        <span className="font-medium">{member.name}</span>
-                        <div className="text-xs text-muted-foreground">
-                          {member.email}
-                        </div>
-                      </div>
-                    </div>
-                  ))
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="py-2 px-3 border-b text-center">#</th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Avatar
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Name
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Email
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Score
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Commits
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Lines Added
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Lines Removed
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Files Modified
+                          </th>
+                          <th className="py-2 px-3 border-b text-center">
+                            Last Commit
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {freeRiders.map((member, idx) => (
+                          <tr
+                            key={member.id}
+                            className="hover:bg-gray-100 transition-colors border-b last:border-b-0"
+                          >
+                            <td className="py-2 px-3 text-center">{idx + 1}</td>
+                            <td className="py-2 px-3 text-center">
+                              {member.avatar && (
+                                <img
+                                  src={member.avatar}
+                                  alt={member.name}
+                                  className="w-8 h-8 rounded-full object-cover mx-auto"
+                                />
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-center font-medium">
+                              {member.name}
+                            </td>
+                            <td className="py-2 px-3 text-center ">
+                              {member.email}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              {member.score ?? "-"}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              {member.commit_count ?? "-"}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              {member.lines_added ?? "-"}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              {member.lines_removed ?? "-"}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              {member.files_modified ?? "-"}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              {member.last_commit_date
+                                ? new Date(
+                                    member.last_commit_date
+                                  ).toLocaleString()
+                                : "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>
