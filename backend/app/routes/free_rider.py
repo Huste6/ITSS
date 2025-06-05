@@ -134,3 +134,12 @@ async def get_free_rider(
     except Exception as e:
         logger.exception("Unhandled error while getting free rider contributors")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@router.get(
+    "/all/free_rider"
+)
+async def get_all_free_rider(
+    group_id: str = Query(..., description="Group ID to filter free riders"),
+):
+    freeriders = await FreeRider.find(FreeRider.group._id == ObjectId(group_id)).to_list()
+    return freeriders
